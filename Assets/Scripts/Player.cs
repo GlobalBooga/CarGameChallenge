@@ -18,6 +18,8 @@ public class Player : MonoBehaviour
     public Action OnUnTriggerAction;
     
     private StateTransitioner stateTransitioner;
+
+    private bool isMoving = false;
     
     private void Awake()
     {
@@ -25,55 +27,50 @@ public class Player : MonoBehaviour
 
         actions.Player.Move.performed += context =>
         {
+            isMoving = true;
             input = context.ReadValue<Vector2>();
-            
         };
 
         actions.Player.Move.canceled += context =>
         {
-            input =  context.ReadValue<Vector2>();
+            isMoving = false;
         };
         
         actions.Player.Move.Enable();
         
         bc = GetComponent<BoxCollider2D>();
 
-        stateTransitioner = new StateTransitioner();
-        stateTransitioner.OwnerPlayer = this;
+        stateTransitioner = new StateTransitioner
+        {
+            OwnerPlayer = this
+        };
     }
 
     private void OnDestroy()
     {
         actions.Dispose();
     }
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private void Start()
-    {
-        
-
-    }
-
     
-    // Update is called once per frame
     private void Update()
     {
+        if (!isMoving) return;
+        
         transform.position += input * (Time.deltaTime * speed);
     }
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        OnCollisionAction.Invoke();
+        OnCollisionAction?.Invoke();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        OnTrigerAction.Invoke();
+        OnTrigerAction?.Invoke();
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        OnUnTriggerAction.Invoke();
+        OnUnTriggerAction?.Invoke();
     }
 
     public void TransitionToState(StateInterface newState)
